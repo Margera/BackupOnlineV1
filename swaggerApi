@@ -1,0 +1,904 @@
+{
+  "swagger" : "2.0",
+  "info" : {
+    "description" : "A REST API versão 2.0 funciona através de requisições HTTP no endereço http://www.ixml.com.br/v2/ \n\n O serviço iXML fornece um amplo conjunto de operações e recursos para que você possa:\n
+		\n- Gravar arquivos XML de documentos fiscais(CTe, CTeOS, NFe e NFCe).\n
+		\n- Gravar eventos de ocorrências de documentos.\n
+		\n- Requisitar dados de documentos armazenados no iXML usando filtros.\n
+		\n- Requisitar lista das colunas disponíveis para consulta.\n
+		\n- Realizar consulta pública de documentos fiscais, CNPJ e Consulta pelo Simples Nacional.\n
+		\n- Consultar dados das empresas cadastradas no iXML e os créditos disponíveis.\n
+	
+	    # Autenticação\n Para realizar a integração com outros softwares, é necessário ter credenciais de acesso, para isso é preciso que crie uma chave de integração.\n Esta chave de integração permite a autenticação com os servidores do iXML.\n\n A forma usada para autenticação é através de um parâmetro chamado `token`. Verifique os parâmetros disponíveis para os métodos na documentação.\n\n
+		
+		
+		> **Nota:** A Chave de Integração é utilizada para realizar a comunicação com o sistema iXML, algumas operações podem gerar consumo de créditos e além disso permite o acesso aos dados da empresa, portanto, não informe esta chave a terceiros.
+		
+		# Tratamento de Erros\n A API usa códigos de status HTTP para indicar sucesso ou falha de uma chamada de API. Em geral, os códigos de status no intervalo 2xx significam sucesso, o intervalo 4xx significa que houve um erro nas informações fornecidas e aquelas no intervalo 5xx indicam erros no lado do servidor. Códigos de status HTTP comumente usados ​​estão listados abaixo.\n\n
+		
+		| Código do Status |      Descrição           |\n
+	    |------------------|--------------------------|\n
+		| 200              | A solicitação foi concluída com sucesso.                                 |\n
+		| 204              | A solicitação foi um sucesso e a resposta retornada não possui conteúdo. |\n
+		| 202              |      O servidor está processando a requisição.                           |\n
+		| 400              |  A solicitação não pode ser executada. Geralmente devido a parâmetros malformados ou parâmetros ausentes. |\n
+		| 401              |  Falha na autenticação   |\n
+		| 404              |  O URL que você enviou está errada. É possível que o recurso que você solicitou tenha sido movido para outro URL. |\n
+		| 500              |  O servidor encontrou um erro que impede o cumprimento da solicitação.  |\n\n
+		
+		O corpo das mensagens de erro são retornadas no formato JSON na seguinte estrutura:\n\n
+		```php\n
+		{\n    'codigo': '400',\n    'descricao': 'Consulta inexistente na base de dados do iXML'\n
+		}\n
+		```
+  ",
+    "version" : "2.0",
+    "title" : "REST API iXML",
+	"x-logo": {
+      "url": "https://www.ixml.com.br/public/login/img/logo.jpg",
+      "backgroundColor": "#0033A0"
+    }
+  },
+  "tags": [
+  {
+	"name":"Documentos",
+	"description": "As requisições de Documentos permitem manipular e obter dados que estão nos servidores do iXML. Também é possível consultar uma lista de colunas disponíveis para leitura."
+  },
+  {
+	"name":"Consulta Pública",
+	"description": "A Consulta Pública disponibiliza métodos para obter documentos armazenados na Sefaz ou Receita Federal."
+  },
+  {
+	"name":"Empresas",
+	"description": "Uma conta do iXML pode conter várias empresas cadastradas, é possível consultar as empresas cadastradas nesta conta através destes métodos"
+  },
+  {
+	"name":"Créditos",
+	"description": "O endpoint também permite consultar a quantidade de créditos disponíveis para a conta."
+  }
+  ],
+  "x-tagGroups": [
+    {
+      "name": "Métodos",
+      "tags": [
+        "Documentos",
+        "Consulta Pública",
+		"Empresas",
+		"Créditos"
+      ]
+    }
+  ],
+  "host" : "api.ixml.com.br",
+  "basePath" : "/v2",
+  "schemes" : [ "http" ],
+  "consumes" : [ "application/json" ],
+  "produces" : [ "application/json" ],
+  "paths" : {
+    "/documentos/xml" : {
+      "get" : {
+        "tags" : [ "Documentos" ],
+        "summary" : "Importar Documentos",
+        "description" : "Este método pode ser utilizado para baixar o XML de um documento no serviço iXML",
+        "operationId" : "DocumentosXmlGet",
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "query",
+          "required" : true,
+          "type" : "string",
+          "description" : "Token de acesso"
+        }, {
+          "name" : "id_documentos",
+          "in" : "query",
+          "required" : true,
+          "type" : "string",
+          "description" : "ID dos documentos(Adquirido na Consulta GET de Documentos) que devem ser importados"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "xml" : {
+                  "type" : "string",
+                  "description" : "Arquivo XML do documento"
+                },
+                "chave" : {
+                  "type" : "string",
+                  "description" : "Chave de acesso do documento"
+                }
+              }
+            },
+            "headers" : {
+              "Accept-Encoding" : {
+                "type" : "string",
+                "description" : "deflate/gzip"
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "Documentos" ],
+        "summary" : "Gravar Documento",
+        "description" : "O endpoint permite gravar um arquivo XML no serviço iXML.",
+        "operationId" : "DocumentosXmlPost",
+        "consumes" : [ "application/x-www-form-urlencoded" ],
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "name" : "Content-Type",
+          "in" : "header",
+          "required" : true,
+          "type" : "string",
+          "description" : "application/x-www-form-urlencoded"
+        }, {
+          "name" : "cnpj_empresa",
+          "in" : "formData",
+          "required" : true,
+          "type" : "string",
+          "description" : "CNPJ da empresa onde o documento deve ser gravado"
+        }, {
+          "name" : "token",
+          "in" : "formData",
+          "required" : true,
+          "type" : "string",
+          "description" : "Token de acesso"
+        }, {
+          "name" : "nsu",
+          "in" : "formData",
+          "required" : true,
+          "type" : "string",
+          "description" : "NSU do Documento"
+        }, {
+          "name" : "xml",
+          "in" : "formData",
+          "required" : true,
+          "type" : "string",
+          "description" : "CTe, CTeOS, NFe ou NFCe"
+        }, {
+          "name" : "tipo_consulta",
+          "in" : "formData",
+          "required" : true,
+          "type" : "string",
+          "description" : "Específica a origem do documento. Os tipos disponíveis são; Sefaz, Email, Manifestada, Destinada, Integração",
+          "enum" : [ "s", "e", "m", "d", "i" ]
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "resultado" : {
+                  "type" : "string",
+                  "description" : "0: Não gravou\n1: Gravou\n2: Atualizou"
+                }
+              }
+            },
+            "examples" : {
+              "application/json" : "{\n    \"resultado\": \"2\"\n}"
+            }
+          }
+        }
+      }
+    },
+    "/eventos/xml" : {
+      "post" : {
+        "tags" : [ "Documentos" ],
+        "summary" : "Gravar Evento",
+        "description" : "Este endpoint permite gravar um evento de ocorrência de NFe, NFCe, CTe ou CTeOS",
+        "operationId" : "EventosXmlPost",
+        "consumes" : [ "application/x-www-form-urlencoded" ],
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "name" : "Content-Type",
+          "in" : "header",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "token",
+          "in" : "formData",
+          "required" : true,
+          "type" : "string",
+          "description" : "Token de acesso"
+        }, {
+          "name" : "cnpj_empresa",
+          "in" : "formData",
+          "required" : false,
+          "type" : "string",
+          "description" : "CNPJ da empresa onde o documento deve ser gravado"
+        }, {
+          "name" : "ambiente",
+          "in" : "formData",
+          "required" : true,
+          "type" : "string",
+          "description" : "Informa o ambiente de emissão do documento, sendo 1 para Produção e 2 para Homologação",
+          "enum" : [ "1", "2" ]
+        }, {
+          "name" : "nsu",
+          "in" : "formData",
+          "required" : true,
+          "type" : "string",
+          "description" : "NSU do Documento"
+        }, {
+          "name" : "xml",
+          "in" : "formData",
+          "required" : true,
+          "type" : "string",
+          "description" : "Documentos aceitos -> CTe, CTeOS, NFe ou NFCe"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "resultado" : {
+                  "type" : "string",
+                  "description" : "0: Não gravou\n1: Gravou\n2: Atualizou"
+                }
+              }
+            },
+            "examples" : {
+              "application/json" : "{\n    \"resultado\": \"1\"\n}"
+            }
+          }
+        }
+      }
+    },
+    "/documentos" : {
+      "get" : {
+        "tags" : [ "Documentos" ],
+        "summary" : "Listar Documentos",
+        "description" : "O método lista os dados de documentos armazenados no iXML. É preciso informado as colunas que devem ser retornadas na consulta. O ID do documento é retornado por padrão.",
+        "operationId" : "ListaDocumentos",
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "query",
+          "required" : true,
+          "type" : "string",
+          "description" : "Token de acesso"
+        }, {
+          "name" : "campos",
+          "in" : "query",
+          "required" : false,
+          "type" : "string",
+          "description" : "Campos que devem ser retornados na consulta",
+          "default" : "id",
+          "x-example" : "emitente,empresa,numero,peso"
+        }, {
+          "name" : "[filtro]",
+          "in" : "query",
+          "required" : false,
+          "type" : "string",
+          "description" : "O filtro deve ser construido baseando-se nas colunas obtidas pela requisição [Listar Campos].",
+          "x-example" : "numero=1820804,1420099&data_emissao=15/07/2016,15/09/2018"
+        }, {
+          "name" : "Accept-Encoding",
+          "in" : "header",
+          "required" : true,
+          "type" : "string",
+          "description" : "application/x-www-form-urlencoded"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200",
+            "schema" : {
+              "type" : "array",
+              "items" : {
+                "type" : "object",
+                "properties" : {
+                  "id" : {
+                    "type" : "string",
+                    "description" : "Id do documento[padrão]"
+                  },
+                  "[campos]" : {
+                    "type" : "string",
+                    "description" : "Campos informados no filtro"
+                  }
+                }
+              }
+            },
+            "examples" : {
+              "application/json" : "[    \n  {\n        \"id\": 123,\n        \"emitente_uf\": \"PR\",\n        \"empresa\": \"INDÚSTRIAS STARK\",\n        \"numero\": 20,\n        \"peso\": \"50,00\",\n        \"valor\": \"R$ 1.100,00\",\n        \"data_emissao\": \"20/08/2018\"\n    },\n    {\n        \"id\": 124,\n        \"emitente_uf\": \"MT\",\n        \"empresa\": \"UMBRELLA CORPORATION\",\n        \"numero\": 2,\n        \"peso\": \"2,00\",\n        \"valor\": \"R$ 25,00\",\n        \"data_emissao\": \"13/02/2017\"\n    }\n]"
+            },
+            "headers" : {
+              "Accept-Encoding" : {
+                "type" : "string",
+                "description" : "deflate/gzip"
+              }
+            }
+          },
+          "204" : {
+            "description" : "Ocorre quando nenhum documento é encontrado usando os filtros informados",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "codigo" : {
+                  "type" : "string",
+                  "description" : "Código da mensagem"
+                },
+                "descricao" : {
+                  "type" : "string",
+                  "description" : "Descrição da mensagem"
+                }
+              }
+            },
+            "examples" : {
+              "application/json" : " {\n    'codigo': '204',\n    'descricao': 'Nenhum documento encontrado na base de dados do iXML'\n }"
+            },
+            "headers" : {
+              "Accept-Encoding" : {
+                "type" : "string",
+                "description" : "deflate/gzip"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/documentos/campos" : {
+      "get" : {
+        "tags" : [ "Documentos" ],
+        "summary" : "Listar Campos",
+        "description" : "Consulta os campos disponíveis para uso na requisição que lista os documentos",
+        "operationId" : "DocumentosCamposGet",
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "name" : "Content-Type",
+          "in" : "header",
+          "required" : true,
+          "type" : "string",
+          "description" : "application/x-www-form-urlencoded"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200",
+            "schema" : {
+              "type" : "array",
+              "items" : {
+                "type" : "object",
+                "properties" : {
+                  "campo" : {
+                    "type" : "string",
+                    "description" : "Nome do campo"
+                  },
+                  "descricao" : {
+                    "type" : "string",
+                    "description" : "Detalhes sobre o campo"
+                  },
+                  "tipo" : {
+                    "type" : "string",
+                    "description" : "Tipo de dados do retorno",
+                    "example" : "Integer"
+                  }
+                }
+              }
+            },
+            "examples" : {
+              "application/json" : "[\n  {\n        \"campo\": \"id\",\n        \"descricao\": \"Id\",\n        \"tipo\": \"Integer\"\n    },\n    {\n        \"campo\": \"empresa\",\n        \"descricao\": \"Empresa\",\n        \"tipo\": \"String(60)\",\n        \"largura\": 40\n    },\n    {\n        \"campo\": \"emitente_nome\",\n        \"descricao\": \"Emitente - Nome\",\n        \"tipo\": \"String(60)\",\n        \"largura\": 45\n    }\n  ]"
+            },
+            "headers" : {
+              "Accept-Encoding" : {
+                "type" : "string",
+                "description" : "deflate/gzip"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/consulta/sefaz" : {
+      "get" : {
+        "tags" : [ "Consulta Pública" ],
+        "summary" : "Requisição de Documento",
+        "description" : "Solicita busca pública de documento - CTe, CTeOS, NFe e NFCe",
+        "operationId" : "ConsultaSefazGet",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "query",
+          "required" : true,
+          "type" : "string",
+          "description" : "Token de acesso"
+        }, {
+          "name" : "cnpj_empresa",
+          "in" : "query",
+          "required" : false,
+          "type" : "string",
+          "description" : "CNPJ da empresa cadastrada no iXML, essa empresa vai receber o documento"
+        }, {
+          "name" : "chave_acesso",
+          "in" : "query",
+          "required" : true,
+          "type" : "string",
+          "description" : "Chave de acesso do documento"
+        }, {
+          "name" : "Content-Type",
+          "in" : "header",
+          "required" : true,
+          "type" : "string",
+          "description" : "application/x-www-form-urlencoded"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "O processamento foi concluído e está pronto para responder no método de retorno",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "status" : {
+                  "type" : "string",
+                  "description" : "Status da consulta solicitada(Pendente, Consultando, Erro, Timeout, Ok ou Cancelado)"
+                },
+                "id_consulta" : {
+                  "type" : "string",
+                  "description" : "Id da consulta, deve ser usado para requisitar o retorno"
+                }
+              }
+            },
+            "examples" : {
+              "application/json" : "{\n    \"status\": \"Ok\",\n    \"id_consulta\": 20021300\n}"
+            },
+            "headers" : {
+              "Accept-Encoding" : {
+                "type" : "string",
+                "description" : "deflate/gzip"
+              }
+            }
+          },
+          "202" : {
+            "description" : "O pedido ainda está sendo processado",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "status" : {
+                  "type" : "string",
+                  "description" : "Status da consulta solicitada"
+                },
+                "id_consulta" : {
+                  "type" : "integer",
+                  "description" : "Id da consulta, deve ser usado para requisitar o retorno"
+                }
+              }
+            },
+            "examples" : {
+              "application/json" : "{\n    \"status\": \"Consultando\",\n    \"id_consulta\": 20021300\n}"
+            },
+            "headers" : {
+              "Accept-Encoding" : {
+                "type" : "string",
+                "description" : "deflate/gzip"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/retorno/sefaz" : {
+      "get" : {
+        "tags" : [ "Consulta Pública" ],
+        "summary" : "Requisição Retorno Documento",
+        "description" : "Solicita o retorno dos dados de uma consulta",
+        "operationId" : "RetornoSefazGet",
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "query",
+          "required" : true,
+          "type" : "string",
+          "description" : "Token de acesso"
+        }, {
+          "name" : "id_consulta",
+          "in" : "query",
+          "required" : true,
+          "type" : "string",
+          "description" : "ID da Consulta obtido na Requisição de Documento"
+        }, {
+          "name" : "Content-Type",
+          "in" : "header",
+          "required" : true,
+          "type" : "string",
+          "description" : "application/x-www-form-urlencoded"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "status" : {
+                  "type" : "string",
+                  "description" : "Status da consulta solicitada"
+                },
+                "chave_acesso" : {
+                  "type" : "string",
+                  "description" : "Chave de acesso do documento"
+                },
+                "xml" : {
+                  "type" : "string",
+                  "description" : "Arquivo XML do documento consultado"
+                }
+              }
+            },
+            "examples" : {
+              "application/json" : "{\n    \"status\": \"Ok\",\n    \"chave_acesso\": \"30000905100000000280550000000009050000031900\",\n    \"xml\": \"[xml]\"\n}"
+            },
+            "headers" : {
+              "Accept-Encoding" : {
+                "type" : "string",
+                "description" : "deflate/gzip"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/consulta/cnpj" : {
+      "get" : {
+        "tags" : [ "Consulta Pública" ],
+        "summary" : "Requisição de CNPJ",
+        "description" : "Solicita consulta publica de CNPJ",
+        "operationId" : "ConsultaCnpjGet",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "query",
+          "required" : true,
+          "type" : "string",
+          "description" : "Token de acesso"
+        }, {
+          "name" : "cnpj",
+          "in" : "query",
+          "required" : true,
+          "type" : "string",
+          "description" : "CNPJ que vai ser consultado"
+        }, {
+          "name" : "Content-Type",
+          "in" : "header",
+          "required" : false,
+          "type" : "string",
+          "description" : "application/x-www-form-urlencoded"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "status" : {
+                  "type" : "string",
+                  "description" : "Status da consulta solicitada"
+                },
+                "id_consulta" : {
+                  "type" : "integer",
+                  "description" : "Id da consulta, deve ser usado para requisitar o retorno"
+                }
+              }
+            },
+            "examples" : {
+              "application/json" : "{\n    \"status\": \"Ok\",\n    \"id_consulta\": 20004993\n}"
+            },
+            "headers" : {
+              "Content-Encoding" : {
+                "type" : "string",
+                "description" : "deflate/gzip"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/retorno/cnpj" : {
+      "get" : {
+        "tags" : [ "Consulta Pública" ],
+        "summary" : "Requisição Retorno de CNPJ",
+        "description" : "Solicita o retorno dos dados do CNPJ consultado",
+        "operationId" : "RetornoCnpjGet",
+        "produces" : [ "application/x-www-form-urlencoded" ],
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "query",
+          "required" : true,
+          "type" : "string",
+          "description" : "Token de acesso"
+        }, {
+          "name" : "id_consulta",
+          "in" : "query",
+          "required" : true,
+          "type" : "integer",
+          "description" : "ID da Consulta obtido na Requisição de Documento"
+        }, {
+          "name" : "Content-Type",
+          "in" : "header",
+          "required" : false,
+          "type" : "string",
+          "description" : "application/x-www-form-urlencoded"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200",
+            "schema" : {
+              "type" : "array",
+              "items" : {
+                "type" : "object",
+                "properties" : {
+                  "status" : {
+                    "type" : "string",
+                    "description" : "Status da consulta no servidor"
+                  },
+                  "cnpj" : {
+                    "type" : "string"
+                  },
+                  "nome" : {
+                    "type" : "string"
+                  },
+                  "fantasia" : {
+                    "type" : "string"
+                  },
+                  "logradouro" : {
+                    "type" : "string"
+                  },
+                  "complemento" : {
+                    "type" : "string"
+                  },
+                  "bairro" : {
+                    "type" : "string"
+                  },
+                  "numero" : {
+                    "type" : "string"
+                  },
+                  "cep" : {
+                    "type" : "string"
+                  },
+                  "municipio" : {
+                    "type" : "string"
+                  },
+                  "uf" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "examples" : {
+              "application/x-www-form-urlencoded" : "{\n    \"status\": \"Ok\",\n    \"cnpj\": \"1000799901162\",\n    \"nome\": \"OSCORP CORPORATION - EPP\",\n    \"fantasia\": \"OSCORP TECHNOLOGY\",\n    \"logradouro\": \"RUA EXEMPLO\",\n    \"complemento\": \" SALA\",\n    \"bairro\": \"CENTRO\",\n    \"numero\": \"100\",\n    \"cep\": \"84000000\",\n    \"municipio\": \"PONTA GROSSA\",\n    \"uf\": \"PR\"\n}"
+            },
+            "headers" : {
+              "Content-Encoding" : {
+                "type" : "string",
+                "description" : "deflate/gzip"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/consulta/simples" : {
+      "get" : {
+        "tags" : [ "Consulta Pública" ],
+        "summary" : "Requisição de Simples Nacional",
+        "description" : "Solicita consulta de CNPJ pelo Simples Nacional",
+        "operationId" : "ConsultaSimplesGet",
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "query",
+          "required" : true,
+          "type" : "string",
+          "description" : "Token de acesso"
+        }, {
+          "name" : "cnpj",
+          "in" : "query",
+          "required" : true,
+          "type" : "string",
+          "description" : "CNPJ que vai ser consultado"
+        }, {
+          "name" : "Content-Type",
+          "in" : "header",
+          "required" : true,
+          "type" : "string",
+          "description" : "application/x-www-form-urlencoded"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "status" : {
+                  "type" : "string",
+                  "description" : "Status da consulta solicitada"
+                },
+                "id_consulta" : {
+                  "type" : "string",
+                  "description" : "Id da consulta, deve ser usado para requisitar o retorno"
+                }
+              }
+            },
+            "examples" : {
+              "application/json" : "{\n    \"status\": \"Ok\",\n    \"id_consulta\": 2099\n}"
+            },
+            "headers" : {
+              "Content-Encoding" : {
+                "type" : "string",
+                "description" : "deflate/gzip"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/retorno/simples" : {
+      "get" : {
+        "tags" : [ "Consulta Pública" ],
+        "summary" : "Requisição Retorno Simples Nacional",
+        "description" : "Solicita o retorno da consulta do Simples Nacional",
+        "operationId" : "RetornoSimplesGet",
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "query",
+          "required" : true,
+          "type" : "string",
+          "description" : "Token de acesso"
+        }, {
+          "name" : "id_consulta",
+          "in" : "query",
+          "required" : true,
+          "type" : "integer",
+          "description" : "Id da consulta que é obtido na requisição da consulta"
+        }, {
+          "name" : "Content-Type",
+          "in" : "header",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "status" : {
+                  "type" : "string",
+                  "description" : "Status da consulta no servidor"
+                },
+                "cnpj" : {
+                  "type" : "string"
+                },
+                "nome" : {
+                  "type" : "string"
+                },
+                "simples_nacional" : {
+                  "type" : "string"
+                },
+                "simei" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "examples" : {
+              "application/json" : "{\n    \"status\": \"Ok\",\n    \"cnpj\": \"188878990119\",\n    \"nome\": \"EMPRESAS WAYNE LTDA\",\n    \"simples_nacional\": \"NÃO optante pelo Simples Nacional\",\n    \"simei\": \"NÃO optante pelo SIMEI\"\n}"
+            },
+            "headers" : {
+              "Content-Encoding" : {
+                "type" : "string",
+                "description" : "deflate/gzip"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/empresas" : {
+      "get" : {
+        "tags" : [ "Empresas" ],
+        "summary" : "Empresas",
+        "description" : "Solicita os dados das empresas cadastradas na conta do iXML",
+        "operationId" : "EmpresasGet",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "query",
+          "required" : true,
+          "type" : "string",
+          "description" : "Token de acesso"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200",
+            "schema" : {
+              "type" : "array",
+              "items" : {
+                "type" : "object",
+                "properties" : {
+                  "id" : {
+                    "type" : "string",
+                    "description" : "Id da empresa"
+                  },
+                  "cnpj" : {
+                    "type" : "string"
+                  },
+                  "razao_social" : {
+                    "type" : "string"
+                  },
+                  "email_divulgacao" : {
+                    "type" : "string",
+                    "description" : "Somente na empresa principal"
+                  },
+                  "endereco" : {
+                    "type" : "string"
+                  },
+                  "numero" : {
+                    "type" : "string"
+                  },
+                  "bairro" : {
+                    "type" : "string"
+                  },
+                  "cidade" : {
+                    "type" : "string"
+                  },
+                  "telefone" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "examples" : {
+              "application/json" : "[\n  {\n        \"id\": \"7\",\n        \"cnpj\": \"0555647999190\",\n        \"razao_social\": \"INDÚSTRIAS STARK\",\n        \"email_divulgacao\": \"indstark@ixml.com.br\",\n        \"endereco\": \"ENDERECO EXEMPLO\",\n        \"numero\": \"100\",\n        \"bairro\": \"BAIRRO EXEMPLO\",\n        \"cidade\": \"IMBITUVA\",\n        \"telefone\": \"\"\n    },\n    {\n        \"id\": \"2132\",\n        \"cnpj\": \"1984739123199\",\n        \"razao_social\": \"UMBRELLA CORPORATION - EPP\",\n        \"endereco\": \"ENDEREÇO EXEMPLO\",\n        \"numero\": \"100\",\n        \"bairro\": \"BAIRRO EXEMPLO\",\n        \"cidade\": \"PONTA GROSSA\",\n        \"telefone\": \"\"\n    }\n]"
+            },
+            "headers" : {
+              "Content-Encoding" : {
+                "type" : "string",
+                "description" : "deflate/gzip"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creditos" : {
+      "get" : {
+        "tags" : [ "Créditos" ],
+        "summary" : "Crédito",
+        "description" : "Consultar os créditos disponíveis para a conta iXML",
+        "operationId" : "CreditosGet",
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "query",
+          "required" : true,
+          "type" : "string",
+          "description" : "Token de acesso"
+        }, {
+          "name" : "Content-Type",
+          "in" : "header",
+          "required" : true,
+          "type" : "string",
+          "description" : "application/x-www-form-urlencoded"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "resultado" : {
+                  "type" : "integer",
+                  "description" : "Retorna a quantidade de créditos disponíveis"
+                }
+              }
+            },
+            "examples" : {
+              "application/json" : "{\n    \"resultado\": 121\n}"
+            },
+            "headers" : {
+              "Content-Encoding" : {
+                "type" : "string",
+                "description" : "deflate/gzip"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
